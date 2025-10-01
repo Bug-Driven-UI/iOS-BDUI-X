@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A52178782E8BA3BF00F59441 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = A52178772E8BA3BF00F59441 /* Kingfisher */; };
+		A521787B2E8BA3D900F59441 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = A521787A2E8BA3D900F59441 /* Alamofire */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		A52178482E8BA15C00F59441 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -29,9 +34,37 @@
 		A52178512E8BA15C00F59441 /* bdui-xUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "bdui-xUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A521791E2E8BABD500F59441 /* Exceptions for "bdui-x" folder in "bdui-x" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"data/utils/DataResponse+Result.swift",
+				"presentation/utils/Color+Hex.swift",
+				"presentation/utils/View+TapIfNeeded.swift",
+			);
+			target = A52178392E8BA15B00F59441 /* bdui-x */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		A521791F2E8BABD500F59441 /* Exceptions for "bdui-x" folder in "Copy Bundle Resources" phase from "bdui-x" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = A52178382E8BA15B00F59441 /* Resources */;
+			membershipExceptions = (
+				"data/utils/DataResponse+Result.swift",
+				"presentation/utils/Color+Hex.swift",
+				"presentation/utils/View+TapIfNeeded.swift",
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A521783C2E8BA15B00F59441 /* bdui-x */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A521791E2E8BABD500F59441 /* Exceptions for "bdui-x" folder in "bdui-x" target */,
+				A521791F2E8BABD500F59441 /* Exceptions for "bdui-x" folder in "Copy Bundle Resources" phase from "bdui-x" target */,
+			);
 			path = "bdui-x";
 			sourceTree = "<group>";
 		};
@@ -52,6 +85,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A52178782E8BA3BF00F59441 /* Kingfisher in Frameworks */,
+				A521787B2E8BA3D900F59441 /* Alamofire in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +147,8 @@
 			);
 			name = "bdui-x";
 			packageProductDependencies = (
+				A52178772E8BA3BF00F59441 /* Kingfisher */,
+				A521787A2E8BA3D900F59441 /* Alamofire */,
 			);
 			productName = "bdui-x";
 			productReference = A521783A2E8BA15B00F59441 /* bdui-x.app */;
@@ -195,6 +232,10 @@
 			);
 			mainGroup = A52178312E8BA15B00F59441;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A52178762E8BA3BF00F59441 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				A52178792E8BA3D900F59441 /* XCRemoteSwiftPackageReference "Alamofire" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A521783B2E8BA15B00F59441 /* Products */;
 			projectDirPath = "";
@@ -405,6 +446,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -433,6 +475,7 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -558,6 +601,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A52178762E8BA3BF00F59441 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.5.0;
+			};
+		};
+		A52178792E8BA3D900F59441 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.10.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A52178772E8BA3BF00F59441 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A52178762E8BA3BF00F59441 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
+		};
+		A521787A2E8BA3D900F59441 /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A52178792E8BA3D900F59441 /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A52178322E8BA15B00F59441 /* Project object */;
 }
