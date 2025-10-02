@@ -8,7 +8,7 @@
 
 import Foundation
 
-enum RenderedSizeModel: Codable {
+enum RenderedSizeModel: Codable, Equatable {
     case fixed(value: Int)
     case weighted(fraction: Float)
     case matchParent

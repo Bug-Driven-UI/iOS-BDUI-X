@@ -39,7 +39,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				"data/utils/DataResponse+Result.swift",
-				"presentation/utils/Color+Hex.swift",
+				presentation/bdui_screen/mappers/bduiMappers.swift,
 				"presentation/utils/View+TapIfNeeded.swift",
 			);
 			target = A52178392E8BA15B00F59441 /* bdui-x */;
@@ -52,7 +52,7 @@
 			buildPhase = A52178382E8BA15B00F59441 /* Resources */;
 			membershipExceptions = (
 				"data/utils/DataResponse+Result.swift",
-				"presentation/utils/Color+Hex.swift",
+				presentation/bdui_screen/mappers/bduiMappers.swift,
 				"presentation/utils/View+TapIfNeeded.swift",
 			);
 		};

@@ -5,93 +5,71 @@
 //  Created by dark type on 01.10.2025.
 //
 
-
 import SwiftUI
 
 struct BduiComponentView: View {
     let component: BduiComponentUI
     let onAction: (BduiActionUI) -> Void
 
-    @State private var inputText = ""
+    @State private var inputMirror: String = ""
 
     var body: some View {
-        content()
-            .bduiBackground(base: component.base)
-            .bduiSize(width: component.base.width, height: component.base.height)
-            .padding(component.base.paddings?.edgeInsets ?? EdgeInsets())
-            .onAppear { fire(component.base.interactions?.onShow) }
-            .applyTapIfNeeded(component: component, onAction: onAction)
+        self.content()
+            .bduiBase(self.component.base, onAction: self.onAction)
+            .onAppear { self.fire(self.component.base.interactions?.onShow) }
     }
 
     @ViewBuilder
     private func content() -> some View {
-        switch component {
+        switch self.component {
         case .text(_, let text):
             Text(text.value)
-                .font(.system(
-                    size: text.style.size,
-                    weight: FontWeightMapper.map(text.style.weight)
-                ))
+                .font(.system(size: text.style.size,
+                              weight: FontWeightMapper.map(text.style.weight)))
                 .foregroundColor(Color(bdui: text.color))
                 .apply(decoration: text.style.decoration)
 
         case .image(_, let url):
             BduiImage(url: url)
 
-        case .button(_, let text, let enabled):
-            Button {
-                if enabled { fire(component.base.interactions?.onClick) }
-            } label: {
-                Text(text.value)
-                    .font(.system(size: text.style.size,
-                                  weight: FontWeightMapper.map(text.style.weight)))
-                    .foregroundColor(Color(bdui: text.color))
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 16)
-            }
-            .disabled(!enabled)
+        case .button(let base, let text, let enabled):
 
-        case .input(_, let label, let placeholder, _):
-            VStack(alignment: .leading, spacing: 4) {
-                Text(label.value)
-                    .font(.caption)
-                TextField(placeholder?.value ?? "", text: $inputText)
-                    .textFieldStyle(.roundedBorder)
+            BduiButtonView(text: text,
+                           enabled: enabled,
+                           base: base)
+            {
+                self.fire(base.interactions?.onClick)
+            }
+
+        case .input(let base, let text, let placeholder, let hint):
+            BduiInputView(
+                component: self.component,
+                base: base,
+                textModel: text,
+                placeholder: placeholder,
+                hint: hint
+            ) { newValue in
+                self.inputMirror = newValue
             }
 
         case .spacer:
             Spacer(minLength: 0)
 
-        case .column(_, let children):
-            VStack(alignment: .leading, spacing: 0) {
-                ForEachIndexed(children) { child in
-                    BduiComponentView(component: child, onAction: onAction)
-                }
-            }
+        case .column:
+            BduiContainerView(component: self.component, onAction: self.onAction)
 
-        case .row(_, let children):
-            HStack(alignment: .center, spacing: 0) {
-                ForEachIndexed(children) { child in
-                    BduiComponentView(component: child, onAction: onAction)
-                }
-            }
+        case .row:
+            BduiContainerView(component: self.component, onAction: self.onAction)
 
-        case .box(_, let children):
-            ZStack {
-                ForEachIndexed(children) { child in
-                    BduiComponentView(component: child, onAction: onAction)
-                }
-            }
+        case .box:
+            BduiContainerView(component: self.component, onAction: self.onAction)
         }
     }
 
     private func fire(_ actions: [BduiActionUI]?) {
-        actions?.forEach(onAction)
+        actions?.forEach(self.onAction)
     }
 }
-
-
-
 
 private extension Text {
     @ViewBuilder

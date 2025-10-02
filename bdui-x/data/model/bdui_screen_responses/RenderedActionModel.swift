@@ -8,19 +8,19 @@
 
 import Foundation
 
-enum RenderedActionModel: Codable {
+enum RenderedActionModel: Codable, Equatable {
     case command(Command)
     case updateScreen(UpdateScreen)
 
     private enum CodingKeys: String, CodingKey { case type }
     private enum TypeValue: String, Codable { case command, updateScreen }
 
-    struct Command: Codable {
+    struct Command: Codable, Equatable {
         let name: String
         let params: [String: JSONValue]?
     }
 
-    struct UpdateScreen: Codable {
+    struct UpdateScreen: Codable, Equatable {
         let screenName: String
         let screenNavigationParams: [String: JSONValue]?
     }

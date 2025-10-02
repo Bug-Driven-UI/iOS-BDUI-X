@@ -9,7 +9,7 @@
 
 import Foundation
 
-struct RenderedStyledTextRepresentationModel: Codable {
+struct RenderedStyledTextRepresentationModel: Codable, Equatable {
     let text: String
     let textStyle: RenderedTextStyleModel
     let colorStyle: RenderedColorStyleModel   

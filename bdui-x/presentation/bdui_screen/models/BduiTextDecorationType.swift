@@ -6,6 +6,6 @@
 //
 
 
-enum BduiTextDecorationType {
+enum BduiTextDecorationType: Equatable {
     case regular, italic, underline, strikethrough, strikethroughRed
 }

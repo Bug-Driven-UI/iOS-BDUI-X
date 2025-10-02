@@ -7,18 +7,26 @@
 
 import SwiftUI
 
-extension View {
-    @ViewBuilder
+private struct TapIfNeededModifier: ViewModifier {
+    let component: BduiComponentUI
+    let onAction: (BduiActionUI) -> Void
+
+    func body(content: Content) -> some View {
+        guard let actions = component.base.interactions?.onClick, !actions.isEmpty else {
+            return AnyView(content)
+        }
+        return AnyView(
+            content
+                .contentShape(Rectangle())
+                .onTapGesture { actions.forEach(onAction) }
+        )
+    }
+}
+
+public extension View {
     func applyTapIfNeeded(component: BduiComponentUI,
                           onAction: @escaping (BduiActionUI) -> Void) -> some View
     {
-        if let actions = component.base.interactions?.onClick, !actions.isEmpty {
-            self.contentShape(Rectangle())
-                .onTapGesture {
-                    actions.forEach(onAction)
-                }
-        } else {
-            self
-        }
+        modifier(TapIfNeededModifier(component: component, onAction: onAction))
     }
 }

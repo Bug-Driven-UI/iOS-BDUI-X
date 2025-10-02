@@ -5,18 +5,14 @@
 //  Created by dark type on 30.09.2025.
 //
 
-
 import Foundation
 
-final class BduiInteractor {
-    private let repository: ScreenRepository
+protocol BduiInteractor {
+    func getScreen(
+        request: ScreenRenderRequestModel
+    ) -> AsyncThrowingStream<OperationState<RenderedScreenModel>, Error>
 
-    init(repository: ScreenRepository) {
-        self.repository = repository
-    }
-
-    func loadScreen(screenId: String, params: [String: JSONValue]) async -> ViewState<RenderedScreenResponseModel> {
-        let result = await repository.fetchScreen(name: screenId)
-        return result.toState()
-    }
+    func doActions(
+        request: ScreenDoActionRequestModel
+    ) -> AsyncThrowingStream<OperationState<ScreenDoActionResponseModel>, Error>
 }

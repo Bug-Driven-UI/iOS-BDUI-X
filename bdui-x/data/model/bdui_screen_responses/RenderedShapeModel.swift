@@ -9,7 +9,7 @@
 // RenderedShapeModel.swift
 import Foundation
 
-struct RenderedShapeModel: Codable {
+struct RenderedShapeModel: Codable, Equatable {
     let type: ShapeType
     let topRight: Int
     let topLeft: Int

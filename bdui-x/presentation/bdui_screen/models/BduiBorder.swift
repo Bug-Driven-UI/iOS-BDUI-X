@@ -6,7 +6,7 @@
 //
 import Foundation
 
-struct BduiBorder {
+struct BduiBorder: Equatable {
     let color: BduiColor
     let thickness: CGFloat
 }

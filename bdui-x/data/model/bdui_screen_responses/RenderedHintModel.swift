@@ -8,6 +8,6 @@
 
 import Foundation
 
-struct RenderedHintModel: Codable {
+struct RenderedHintModel: Codable, Equatable {
     let textWithStyle: RenderedStyledTextRepresentationModel
 }

@@ -5,7 +5,7 @@
 //  Created by dark type on 01.10.2025.
 //
 
-struct BduiComponentBaseProperties {
+struct BduiComponentBaseProperties : Equatable{
     let id: String
     let hash: String
     let interactions: BduiComponentInteractionsUI?

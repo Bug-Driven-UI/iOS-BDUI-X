@@ -9,7 +9,7 @@
 
 import Foundation
 
-struct RenderedInsetsModel: Codable {
+struct RenderedInsetsModel: Codable, Equatable {
     let left: Int
     let right: Int
     let bottom: Int

@@ -8,10 +8,10 @@
 
 import Foundation
 
-enum RenderedComponent: Codable {
+enum RenderedComponent: Codable, Equatable {
     case row(Row)
     case box(Box)
-    case column(Column)
+    case column(ColumnComponent)
     case text(TextComponent)
     case image(ImageComponent)
     case input(InputComponent)
@@ -29,7 +29,7 @@ enum RenderedComponent: Codable {
         switch type {
         case .row:    self = .row(try Row(from: decoder))
         case .box:    self = .box(try Box(from: decoder))
-        case .column: self = .column(try Column(from: decoder))
+        case .column: self = .column(try ColumnComponent(from: decoder))
         case .text:   self = .text(try TextComponent(from: decoder))
         case .image:  self = .image(try ImageComponent(from: decoder))
         case .input:  self = .input(try InputComponent(from: decoder))

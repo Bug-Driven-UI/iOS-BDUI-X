@@ -5,7 +5,7 @@
 //  Created by dark type on 01.10.2025.
 //
 
-enum BduiComponentUI {
+enum BduiComponentUI: Equatable {
     case text(base: BduiComponentBaseProperties, text: BduiText)
     case image(base: BduiComponentBaseProperties, url: String)
     case button(base: BduiComponentBaseProperties, text: BduiText, enabled: Bool)
@@ -25,6 +25,7 @@ enum BduiComponentUI {
              .column(let b, _),
              .row(let b, _),
              .box(let b, _):
+
             return b
         }
     }

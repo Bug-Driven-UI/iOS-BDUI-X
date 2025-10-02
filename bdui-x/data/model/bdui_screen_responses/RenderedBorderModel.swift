@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct RenderedBorderModel: Codable {
+struct RenderedBorderModel: Codable, Equatable {
     let color: RenderedColorStyleModel
     let thickness: Int
 }

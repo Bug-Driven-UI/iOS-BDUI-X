@@ -9,7 +9,7 @@
 import Foundation
 
 struct InputComponent: RenderedComponentCommon {
-    enum Mask: String, Codable {
+    enum Mask: String, Codable, Equatable {
         case phone
     }
     let textWithStyle: RenderedStyledTextRepresentationModel

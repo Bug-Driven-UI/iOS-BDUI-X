@@ -8,6 +8,6 @@
 
 import Foundation
 
-enum RenderedRegexModel: String, Codable {
+enum RenderedRegexModel: String, Codable, Equatable {
     case email = "email"
 }

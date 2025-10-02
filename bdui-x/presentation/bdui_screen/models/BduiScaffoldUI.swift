@@ -8,7 +8,7 @@
 
 import SwiftUI
 
-struct BduiScaffoldUI {
+struct BduiScaffoldUI: Equatable {
     let topBar: BduiComponentUI?
     let bottomBar: BduiComponentUI?
 }

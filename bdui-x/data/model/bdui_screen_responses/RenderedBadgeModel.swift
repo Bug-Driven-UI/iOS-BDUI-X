@@ -8,15 +8,15 @@
 
 import Foundation
 
-enum RenderedBadgeModel: Codable {
+enum RenderedBadgeModel: Codable, Equatable {
     case badgeWithImage(BadgeWithImage)
     case badgeWithText(BadgeWithText)
 
     private enum CodingKeys: String, CodingKey { case type }
     private enum TypeValue: String, Codable { case badgeWithImage, badgeWithText }
 
-    struct BadgeWithImage: Codable { let imageUrl: String }
-    struct BadgeWithText: Codable { let textWithStyle: RenderedStyledTextRepresentationModel }
+    struct BadgeWithImage: Codable, Equatable { let imageUrl: String }
+    struct BadgeWithText: Codable, Equatable { let textWithStyle: RenderedStyledTextRepresentationModel }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)

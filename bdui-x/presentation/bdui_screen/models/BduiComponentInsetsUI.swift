@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct BduiComponentInsetsUI {
+struct BduiComponentInsetsUI: Equatable {
     let start: CGFloat
     let end: CGFloat
     let top: CGFloat

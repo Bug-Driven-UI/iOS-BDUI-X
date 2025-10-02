@@ -7,11 +7,11 @@
 
 import Foundation
 
-struct ScreenRenderRequestModel: Codable {
+struct ScreenRenderRequestModel: Codable, Equatable {
     let data: Data
 
-    struct Data: Codable {
+    struct Data: Codable, Equatable {
         let screenName: String
-        let variables: [String: String]?
+        let variables: [String: JSONValue]?
     }
 }

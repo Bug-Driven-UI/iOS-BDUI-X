@@ -8,7 +8,7 @@
 
 import Foundation
 
-protocol RenderedComponentCommon: Codable {
+protocol RenderedComponentCommon: Codable, Equatable {
     var id: String { get }
     var hash: String { get }
     var interactions: [RenderedInteractionModel] { get }

@@ -8,27 +8,30 @@
 
 import Foundation
 
-enum ViewState<T> {
+enum UiState<Content> {
     case loading
-    case success(T)
-    case error(Error?)
+    case error
+    case content(Content)
 }
 
-extension Result {
-    func toState() -> ViewState<T> {
-        switch self {
-        case .success(let v): return .success(v)
-        case .error(let e): return .error(e)
-        }
+extension UiState {
+    var content: Content? {
+        if case .content(let c) = self { return c } else { return nil }
+    }
+
+    mutating func updateContent(_ transform: (Content) -> Content) {
+        guard case .content(let c) = self else { return }
+        self = .content(transform(c))
     }
 }
 
-extension ViewState {
-    func map<R>(_ transform: (T) -> R) -> ViewState<R> {
-        switch self {
-        case .loading: return .loading
-        case .error(let e): return .error(e)
-        case .success(let v): return .success(transform(v))
-        }
+enum OperationState<T> {
+    case loading
+    case success(T)
+    case error(Error)
+
+    var isLoading: Bool {
+        if case .loading = self { return true }
+        return false
     }
 }

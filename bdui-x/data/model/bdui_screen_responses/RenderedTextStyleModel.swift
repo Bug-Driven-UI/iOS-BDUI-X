@@ -9,7 +9,7 @@
 
 import Foundation
 
-struct RenderedTextStyleModel: Codable {
+struct RenderedTextStyleModel: Codable,Equatable {
     let decoration: RenderedTextDecorationTypeModel?
     let weight: Int?
     let size: Int

@@ -5,9 +5,8 @@
 //  Created by dark type on 01.10.2025.
 //
 
-enum BduiActionUI {
-    
-    enum Remote {
+enum BduiActionUI: Equatable {
+    enum Remote: Equatable {
         case command(name: String, params: [String: JSONValue]?)
         case updateScreen(name: String, params: [String: JSONValue]?)
     }

@@ -6,7 +6,7 @@
 //
 
 
-struct BduiText {
+struct BduiText: Equatable {
     let value: String
     let color: BduiColor
     let style: BduiTextStyle

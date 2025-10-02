@@ -6,7 +6,7 @@
 //
 import Foundation
 
-struct BduiTextStyle {
+struct BduiTextStyle: Equatable {
     let decoration: BduiTextDecorationType
     let weight: Int
     let size: CGFloat

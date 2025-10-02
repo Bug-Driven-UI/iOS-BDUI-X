@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct Column: RenderedComponentCommon {
+struct ColumnComponent: RenderedComponentCommon {
     let children: [RenderedComponent]
     let id: String
     let hash: String

@@ -8,6 +8,6 @@
 
 import Foundation
 
-struct RenderedPlaceholderModel: Codable {
+struct RenderedPlaceholderModel: Codable, Equatable {
     let textWithStyle: RenderedStyledTextRepresentationModel
 }

@@ -6,8 +6,8 @@
 //
 import Foundation
 
-enum BduiShape {
-    struct RoundedCorners {
+enum BduiShape: Equatable {
+    struct RoundedCorners : Equatable {
         let topStart: CGFloat
         let topEnd: CGFloat
         let bottomStart: CGFloat

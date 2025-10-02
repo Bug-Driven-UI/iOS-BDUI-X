@@ -6,7 +6,7 @@
 //
 import Foundation
 
-enum BduiComponentSize {
+enum BduiComponentSize: Equatable {
     case fixed(CGFloat)
     case weighted(CGFloat)
     case matchParent

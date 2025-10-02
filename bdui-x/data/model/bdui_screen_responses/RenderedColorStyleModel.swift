@@ -9,6 +9,6 @@
 
 import Foundation
 
-struct RenderedColorStyleModel: Codable {
+struct RenderedColorStyleModel: Codable, Equatable {
     let hex: String
 }
