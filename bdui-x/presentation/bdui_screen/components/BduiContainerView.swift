@@ -31,7 +31,7 @@ public struct BduiContainerComponent: View {
                             onAction: onAction,
                             buttonEnabled: child.buttonEnabledValue
                         )
-                        .fixedSize(horizontal: false, vertical: true) // avoid vertical stretch
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
@@ -49,12 +49,44 @@ public struct BduiContainerComponent: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else {
-                HStack(alignment: m.verticalAlignment.toSwiftUI(), spacing: 8) {
-                    ForEach(Array(m.children.enumerated()), id: \.0) { _, child in
-                        rowChildView(child)
+                let hasExplicitSpacer = m.children.contains { if case .spacerModel = $0 { return true } else { return false } }
+                let arrangement = m.horizontalArrangement
+
+                if usesFlexibleSpacing(arrangement), !hasExplicitSpacer {
+                    HStack(alignment: m.verticalAlignment.toSwiftUI(), spacing: 0) {
+                        if arrangement == .center || arrangement == .end || arrangement == .spaceEvenly || arrangement == .spaceAround {
+                            Spacer(minLength: 0) 
+                        }
+
+                        ForEach(Array(m.children.enumerated()), id: \.0) { idx, child in
+                            rowChildView(child)
+
+                            if idx < m.children.count - 1, arrangement == .spaceBetween || arrangement == .spaceEvenly || arrangement == .spaceAround {
+                                Spacer(minLength: 0)
+                            }
+                        }
+
+                        if arrangement == .center || arrangement == .spaceEvenly || arrangement == .spaceAround {
+                            Spacer(minLength: 0)
+                        }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                } else {
+                    // Fallback: plain row with fixed spacing (start-aligned or when explicit spacers are present)
+                    HStack(alignment: m.verticalAlignment.toSwiftUI(), spacing: 8) {
+                        // For end/center without flexible mode (because of explicit spacers), add manual leading/trailing spacers
+                        if arrangement == .center && hasExplicitSpacer == false { Spacer(minLength: 0) }
+                        if arrangement == .end && hasExplicitSpacer == false { Spacer(minLength: 0) }
+
+                        ForEach(Array(m.children.enumerated()), id: \.0) { _, child in
+                            rowChildView(child)
+                        }
+
+                        if arrangement == .center && hasExplicitSpacer == false { Spacer(minLength: 0) }
+                    }
+                    .frame(maxWidth: .infinity, alignment: arrangement == .end ? .trailing : (arrangement == .center ? .center : .leading))
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
         default:
@@ -62,39 +94,18 @@ public struct BduiContainerComponent: View {
         }
     }
 
-    // MARK: - Row child rendering (iOS 13+ friendly)
-
     @ViewBuilder
     private func rowChildView(_ child: BduiComponentUiModel) -> some View {
         switch child {
-        case .spacerModel:
-            // Treat spacer as real flexible space, not a view with background/shape
-            Spacer(minLength: 0)
+        case .spacerModel(let m):
+            // If spacer has fixed width/height, honor width; otherwise flex
+            switch m.baseProperties.width {
+            case .fixed(let w): Spacer().frame(width: CGFloat(w))
+            case .weighted, .matchParent: Spacer(minLength: 0)
+            case .wrapContent: Spacer(minLength: 0)
+            }
 
-        case .buttonModel:
-            BduiComponent(component: child, onAction: onAction)
-                .bduiBaseProperties(
-                    base: child.basePropertiesValue,
-                    onAction: onAction,
-                    buttonEnabled: child.buttonEnabledValue
-                )
-                .fixedSize(horizontal: true, vertical: true) // keep intrinsic size
-                .applyWidthWeight(child.widthWeight)          // expand only if weighted
-
-        case .textModel:
-            BduiComponent(component: child, onAction: onAction)
-                .bduiBaseProperties(
-                    base: child.basePropertiesValue,
-                    onAction: onAction,
-                    buttonEnabled: child.buttonEnabledValue
-                )
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .layoutPriority(1)                            // resist compression vs Spacer
-                .fixedSize(horizontal: false, vertical: true)
-                .applyWidthWeight(child.widthWeight)
-
-        default:
+        case .buttonModel, .textModel, .imageModel, .inputModel, .rowModel, .columnModel, .boxModel:
             BduiComponent(component: child, onAction: onAction)
                 .bduiBaseProperties(
                     base: child.basePropertiesValue,
@@ -103,6 +114,17 @@ public struct BduiContainerComponent: View {
                 )
                 .fixedSize(horizontal: false, vertical: true)
                 .applyWidthWeight(child.widthWeight)
+        }
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func applyWidthWeight(_ weight: CGFloat?) -> some View {
+        if let _ = weight {
+            frame(maxWidth: .infinity)
+        } else {
+            self
         }
     }
 }
@@ -222,26 +244,26 @@ private struct BduiBasePropertiesModifier: ViewModifier {
     func body(content: Content) -> some View {
         let shape = backgroundShape()
 
-        let inner = content
+        let padded = content
             .padding(base.paddings.toEdgeInsets())
+
+        let sized = padded
+            .applyWidth(base.width)
+            .applyHeight(base.height)
+
+        let decorated = sized
             .background(shape.fill(base.backgroundColor?.toColor() ?? .clear))
             .overlay(borderOverlay(with: shape))
             .clipShape(shape)
 
-        let sized = inner
-            .applyWidth(base.width)
-            .applyHeight(base.height)
-
-        let withMargins = sized.padding(base.margins.toEdgeInsets())
-
-        return withMargins
+        return decorated
+            .padding(base.margins.toEdgeInsets())
             .contentShape(Rectangle())
             .onTapGesture {
                 guard buttonEnabled ?? true else { return }
                 trigger(base.interactions?.onClick)
             }
             .onAppear {
-                // Defer onShow to avoid "Modifying state during view update"
                 if !didSendOnShow {
                     didSendOnShow = true
                     DispatchQueue.main.async {
@@ -293,26 +315,34 @@ private struct AnyShapeCompat: Shape {
 private extension View {
     func applyWidth(_ size: BduiComponentSizeModel) -> some View {
         switch size {
-        case .fixed(let v):
-            return AnyView(frame(width: CGFloat(v)))
-        case .weighted:
-            // Allow to expand, share remaining width with other weighted items
-            return AnyView(frame(maxWidth: .infinity))
-        case .matchParent:
-            return AnyView(frame(maxWidth: .infinity))
-        case .wrapContent:
-            return AnyView(self)
+        case .fixed(let v): return AnyView(frame(width: CGFloat(v)))
+        case .weighted, .matchParent: return AnyView(frame(maxWidth: .infinity))
+        case .wrapContent: return AnyView(self)
         }
     }
 
     func applyHeight(_ size: BduiComponentSizeModel) -> some View {
         switch size {
-        case .fixed(let v):
-            return AnyView(frame(height: CGFloat(v)))
+        case .fixed(let v): return AnyView(frame(height: CGFloat(v)))
         case .weighted, .matchParent, .wrapContent:
-            // IMPORTANT: do NOT force maxHeight: .infinity for row/column items to avoid vertical inflation (huge bottom bar)
             return AnyView(self)
         }
+    }
+}
+
+private func usesFlexibleSpacing(_ arrangement: BduiHorizontalArrangementModel?) -> Bool {
+    guard let a = arrangement else { return false }
+    switch a {
+    case .spaceBetween, .spaceEvenly, .spaceAround, .center, .end: return true
+    case .start: return false
+    }
+}
+
+private func usesFlexibleSpacing(_ arrangement: BduiVerticalArrangementModel?) -> Bool {
+    guard let a = arrangement else { return false }
+    switch a {
+    case .spaceBetween, .spaceEvenly, .spaceAround, .center, .bottom: return true
+    case .top: return false
     }
 }
 
@@ -328,30 +358,54 @@ struct ColumnModelBody: View {
     let onAction: (BduiActionUiModel) -> Void
 
     var body: some View {
-        VStack(alignment: m.horizontalAlignment.toSwiftUI(), spacing: 8) {
-            ForEach(Array(m.children.enumerated()), id: \.0) { _, child in
-                BduiComponent(component: child, onAction: onAction)
-                    .bduiBaseProperties(
-                        base: child.basePropertiesValue,
-                        onAction: onAction,
-                        buttonEnabled: child.buttonEnabledValue
-                    )
-                    // Do NOT force maxHeight here; keep intrinsic height to prevent oversized sections
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .bduiBaseProperties(base: m.baseProperties, onAction: onAction)
-    }
-}
+        let hasExplicitSpacer = m.children.contains { if case .spacerModel = $0 { return true } else { return false } }
+        let arrangement = m.verticalArrangement
 
-private extension View {
-    @ViewBuilder
-    func applyWidthWeight(_ weight: CGFloat?) -> some View {
-        if let _ = weight {
-            // Expand horizontally with others; exact fractional split is approximated on iOS <16
-            frame(maxWidth: .infinity)
+        if usesFlexibleSpacing(arrangement), !hasExplicitSpacer {
+            VStack(alignment: m.horizontalAlignment.toSwiftUI(), spacing: 0) {
+                if arrangement == .center || arrangement == .bottom || arrangement == .spaceEvenly || arrangement == .spaceAround {
+                    Spacer(minLength: 0) // top spacer for center/bottom/evenly/around
+                }
+
+                ForEach(Array(m.children.enumerated()), id: \.0) { idx, child in
+                    BduiComponent(component: child, onAction: onAction)
+                        .bduiBaseProperties(
+                            base: child.basePropertiesValue,
+                            onAction: onAction,
+                            buttonEnabled: child.buttonEnabledValue
+                        )
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if idx < m.children.count - 1, arrangement == .spaceBetween || arrangement == .spaceEvenly || arrangement == .spaceAround {
+                        Spacer(minLength: 0)
+                    }
+                }
+
+                if arrangement == .center || arrangement == .spaceEvenly || arrangement == .spaceAround {
+                    Spacer(minLength: 0) // bottom spacer for center/evenly/around
+                }
+                // For .bottom, we added only top Spacer to push content down.
+                // For .top (default), no extra spacers.
+            }
+            .bduiBaseProperties(base: m.baseProperties, onAction: onAction)
         } else {
-            self
+            VStack(alignment: m.horizontalAlignment.toSwiftUI(), spacing: 8) {
+                if arrangement == .center && hasExplicitSpacer == false { Spacer(minLength: 0) }
+                if arrangement == .bottom && hasExplicitSpacer == false { Spacer(minLength: 0) }
+
+                ForEach(Array(m.children.enumerated()), id: \.0) { _, child in
+                    BduiComponent(component: child, onAction: onAction)
+                        .bduiBaseProperties(
+                            base: child.basePropertiesValue,
+                            onAction: onAction,
+                            buttonEnabled: child.buttonEnabledValue
+                        )
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                if arrangement == .center && hasExplicitSpacer == false { Spacer(minLength: 0) }
+            }
+            .bduiBaseProperties(base: m.baseProperties, onAction: onAction)
         }
     }
 }

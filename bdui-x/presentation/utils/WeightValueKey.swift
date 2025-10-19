@@ -24,21 +24,16 @@ public extension View {
         }
     }
 
-    
     @ViewBuilder
     func weight(_ value: CGFloat, axis: Axis) -> some View {
         if #available(iOS 16.0, *) {
             self.layoutValue(key: WeightValueKey.self, value: max(0, value))
         } else {
-            
             switch axis {
             case .horizontal:
-                self
-                    
-                    .layoutPriority(Double(max(0, value)))
+                layoutPriority(Double(max(0, value)))
             case .vertical:
-                self
-                    .layoutPriority(Double(max(0, value)))
+                layoutPriority(Double(max(0, value)))
             }
         }
     }

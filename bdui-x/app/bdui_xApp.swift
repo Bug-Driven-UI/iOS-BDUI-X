@@ -16,21 +16,25 @@ struct bdui_xApp: App {
 
     var body: some Scene {
         WindowGroup {
-            BduiTheme {
-                BduiNavGraph(
-                    navigationManager: dependencies.navigationManager,
-                    resultStore: dependencies.navigationResults,
-                    start: {
-                        StartScreenView(navigation: dependencies.navigationManager)
-                    },
-                    bduiScreen: { args, isBottomSheet in
-                        BduiScreenView(
-                            args: args,
-                            isBottomSheet: isBottomSheet,
-                            dependencies: dependencies
-                        )
-                    }
-                )
+
+            ZStack {
+                Color.white.ignoresSafeArea()
+                BduiTheme {
+                    BduiNavGraph(
+                        navigationManager: dependencies.navigationManager,
+                        resultStore: dependencies.navigationResults,
+                        start: {
+                            StartScreenView(navigation: dependencies.navigationManager)
+                        },
+                        bduiScreen: { args, isBottomSheet in
+                            BduiScreenView(
+                                args: args,
+                                isBottomSheet: isBottomSheet,
+                                dependencies: dependencies
+                            )
+                        }
+                    )
+                }
             }
         }
     }

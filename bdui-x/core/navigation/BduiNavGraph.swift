@@ -31,17 +31,21 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
     }
 
     public func makeUIViewController(context: Context) -> UINavigationController {
-        let root = FullScreenWrapper(content: buildStart())
+        let root = FullScreenWrapper(content: buildStart(), background: .white)
         let rootVC = UIHostingController(rootView: root)
-        rootVC.view.isOpaque = true
-        rootVC.view.backgroundColor = .white
+        configureHostingVC(rootVC)
+
         let nav = UINavigationController(rootViewController: rootVC)
+        // Make navigation controller fully opaque white; avoid any translucency bleeding
+        nav.view.isOpaque = true
+        nav.view.backgroundColor = .white
         nav.navigationBar.isHidden = true
+        nav.navigationBar.isTranslucent = false
         nav.isToolbarHidden = true
-        nav.view.backgroundColor = .clear
         nav.modalPresentationCapturesStatusBarAppearance = true
         nav.setNavigationBarHidden(true, animated: false)
         nav.interactivePopGestureRecognizer?.isEnabled = true
+        nav.definesPresentationContext = true
 
         context.coordinator.attach(
             navController: nav,
@@ -55,8 +59,12 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
 
     public func updateUIViewController(_ uiViewController: UINavigationController, context: Context) {
         if let root = uiViewController.viewControllers.first as? UIHostingController<FullScreenWrapper<StartView>> {
-            root.rootView = FullScreenWrapper(content: buildStart())
+            root.rootView = FullScreenWrapper(content: buildStart(), background: .white)
+            configureHostingVC(root)
         }
+        // Keep nav opaque on any external changes
+        uiViewController.view.isOpaque = true
+        uiViewController.view.backgroundColor = .white
     }
 
     public func makeCoordinator() -> Coordinator { Coordinator() }
@@ -67,14 +75,11 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
         private var queue: [NavigationCommand] = []
         private var isTransitioning = false
 
-        // Track stack beyond root
         private var routes: [NavigationRoute] = []
 
-        // Bottom sheet
         private var sheetController: UIViewController?
         private var isSheetAlreadyDismissing = false
 
-        // Builders
         private var buildStart: BuildStart!
         private var buildBduiScreen: BuildBduiScreen!
         private weak var resultStore: NavigationResultStore?
@@ -118,8 +123,7 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
         private func push<V: View>(_ view: V, animated: Bool = true) {
             guard let nav else { finishTransition(); return }
             let vc = UIHostingController(rootView: FullScreenWrapper(content: view, background: .white))
-            vc.view.isOpaque = true
-            vc.view.backgroundColor = .white
+            configureHostingVC(vc)
             vc.navigationItem.largeTitleDisplayMode = .never
             CATransaction.begin()
             CATransaction.setCompletionBlock { [weak self] in self?.finishTransition() }
@@ -129,6 +133,12 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
 
         private func setStack(_ vcs: [UIViewController], animated: Bool = false, completion: (() -> Void)? = nil) {
             guard let nav else { completion?(); finishTransition(); return }
+            // Ensure every VC is configured (opaque, extended under edges)
+            vcs.forEach { configureHostingVC($0) }
+
+            nav.view.isOpaque = true
+            nav.view.backgroundColor = .white
+
             CATransaction.begin()
             CATransaction.setCompletionBlock { [weak self] in
                 completion?()
@@ -142,16 +152,13 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
             guard let nav else { finishTransition(); return }
 
             let sheetVC = UIHostingController(rootView: FullScreenWrapper(content: view, background: .white))
-            sheetVC.view.isOpaque = true
-            sheetVC.view.backgroundColor = .white
+            configureHostingVC(sheetVC)
             sheetVC.modalPresentationStyle = .pageSheet
             if let sheet = sheetVC.sheetPresentationController {
-                
-                    sheet.detents = [.medium()]
-                    sheet.selectedDetentIdentifier = .medium
-                    sheet.largestUndimmedDetentIdentifier = .medium
-                    sheet.prefersGrabberVisible = true
-                
+                sheet.detents = [.medium()]
+                sheet.selectedDetentIdentifier = .medium
+                sheet.largestUndimmedDetentIdentifier = .medium
+                sheet.prefersGrabberVisible = true
             }
             sheetVC.presentationController?.delegate = self
 
@@ -171,18 +178,15 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
             switch route {
             case .startScreen:
                 let vc = UIHostingController(rootView: FullScreenWrapper(content: buildStart(), background: .white))
-                vc.view.isOpaque = true
-                vc.view.backgroundColor = .white
+                configureHostingVC(vc)
                 return vc
             case .bduiScreen(let args):
                 let vc = UIHostingController(rootView: FullScreenWrapper(content: buildBduiScreen(args, false), background: .white))
-                vc.view.isOpaque = true
-                vc.view.backgroundColor = .white
+                configureHostingVC(vc)
                 return vc
             }
         }
 
-        
         private func setBackLocked(_ locked: Bool) {
             nav?.interactivePopGestureRecognizer?.isEnabled = !locked
         }
@@ -237,7 +241,6 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
                 }
 
             case .back:
-                // Ignore back when BDUI is the only/top screen (permanent)
                 if routes.last?.isBdui == true, (nav?.viewControllers.count ?? 1) <= 1 {
                     finishTransition()
                     return
@@ -251,7 +254,6 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
                     }
                 } else if let nav, nav.viewControllers.count > 1 {
                     routes.removeLast()
-                    // Pop
                     CATransaction.begin()
                     CATransaction.setCompletionBlock { [weak self] in
                         self?.setBackLocked(self?.routes.last?.isBdui == true)
@@ -265,7 +267,6 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
 
             case .backWithResult(let key, let value):
                 resultStore?.set(key, value: value)
-                // Same lock behavior as back
                 if routes.last?.isBdui == true, (nav?.viewControllers.count ?? 1) <= 1 {
                     finishTransition()
                     return
@@ -292,6 +293,22 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
             }
         }
     }
+}
+
+// Force every hosted VC to be full-bleed and opaque.
+private func configureHostingVC(_ vc: UIViewController) {
+    vc.view.isOpaque = true
+    vc.view.backgroundColor = .white
+    vc.modalPresentationCapturesStatusBarAppearance = true
+
+    // Extend under all edges so SwiftUI content (with ignoresSafeArea) truly fills the screen
+    vc.edgesForExtendedLayout = [.top, .bottom, .left, .right]
+    vc.extendedLayoutIncludesOpaqueBars = true
+    vc.additionalSafeAreaInsets = .zero
+    vc.view.insetsLayoutMarginsFromSafeArea = false
+
+    // Ensure it resizes with its parent during transitions/rotations
+    vc.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
 }
 
 struct FullScreenWrapper<Content: View>: View {

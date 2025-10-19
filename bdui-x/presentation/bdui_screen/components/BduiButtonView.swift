@@ -20,15 +20,22 @@ public struct BduiButtonComponent: View {
     }
 
     public var body: some View {
-        HStack(spacing: 0) {
-            BduiTextLeaf(component: component.text)
-                .bduiBaseProperties(
-                    base: component.text.baseProperties,
-                    onAction: onAction,
-                    buttonEnabled: false
-                )
-        }
-     
+        let content = BduiTextComponent(component: component.text)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .fixedSize(horizontal: false, vertical: true)
+        
+
+
+        content
+            .bduiBaseProperties(
+                base: component.baseProperties,
+                onAction: onAction,
+                buttonEnabled: component.enabled
+            )
+            .contentShape(Rectangle())
+            .allowsHitTesting(component.enabled)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 
