@@ -1,0 +1,12 @@
+/* 
+  Localizable.strings
+  bdui-x
+
+  Created by dark type on 19.10.2025.
+  
+*/
+"app_name" = "BDUIX";
+"general_error_snackbar_text" = "Ой! Что-то пошло не так";
+"general_error_title" = "Неизвестная ошибка";
+"general_error_description" = "Попробуйте обновить страницу или загляните позже — мы обязательно всё починим.";
+"general_error_button_text" = "Обновить";

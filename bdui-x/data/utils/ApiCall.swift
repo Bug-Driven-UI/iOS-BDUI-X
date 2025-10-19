@@ -8,7 +8,7 @@
 import Foundation
 
 @discardableResult
-func apiCall<T>(_ block: () async throws -> Result<T>) async -> Result<T> {
+func apiCall<T>(_ block: () async throws -> ResultModel<T>) async -> ResultModel<T> {
     do {
         return try await block()
     } catch {

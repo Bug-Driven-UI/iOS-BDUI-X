@@ -19,7 +19,7 @@ final class APISession {
         self.jsonDecoder = decoder
     }
 
-    func requestDecodable<T: Decodable>(_ convertible: URLRequestConvertible) async -> Result<T> {
+    func requestDecodable<T: Decodable>(_ convertible: URLRequestConvertible) async -> ResultModel<T> {
         do {
             let value = try await session
                 .request(convertible)
@@ -32,7 +32,7 @@ final class APISession {
         }
     }
 
-    func requestCompletable(_ convertible: URLRequestConvertible) async -> Result<Completable> {
+    func requestCompletable(_ convertible: URLRequestConvertible) async -> ResultModel<Completable> {
         let response = await session
             .request(convertible)
             .serializingData()

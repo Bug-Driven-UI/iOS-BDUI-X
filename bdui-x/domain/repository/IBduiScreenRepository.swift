@@ -5,13 +5,15 @@
 //  Created by dark type on 30.09.2025.
 //
 
-
 import Foundation
 
-protocol IBduiScreenRepositorySwift {
+public protocol IBduiScreenRepository {
     func getScreen(
         userId: String,
         request: ScreenRenderRequestModel
-    ) async -> Result<RenderedScreenResponseModel>
-}
+    ) async -> ResultModel<RenderedScreenResponseModel>
 
+    func doAction(
+        request: ScreenDoActionRequestModel
+    ) async -> ResultModel<ScreenDoActionResponseModel>
+}
