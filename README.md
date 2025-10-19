@@ -36,6 +36,6 @@
 ### Шаги:
 1. Создать проект в **Firebase** и включить аналитику.
 2. Склонировать проект в Xcode:
-3. Скачать файл google-services.json из Firebase и положить его в /app.
+3. Скачать файл GoogleService-Info.plist из Firebase и положить его в корень проекта.
 4. Запустить приложение:
    - Xcode (Run app)
