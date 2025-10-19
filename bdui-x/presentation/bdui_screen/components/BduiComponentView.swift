@@ -7,79 +7,37 @@
 
 import SwiftUI
 
-struct BduiComponentView: View {
-    let component: BduiComponentUI
-    let onAction: (BduiActionUI) -> Void
+public struct BduiComponent: View {
+    let component: BduiComponentUiModel
+    let onAction: (BduiActionUiModel) -> Void
 
-    @State private var inputMirror: String = ""
-
-    var body: some View {
-        self.content()
-            .bduiBase(self.component.base, onAction: self.onAction)
-            .onAppear { self.fire(self.component.base.interactions?.onShow) }
+    public init(
+        component: BduiComponentUiModel,
+        onAction: @escaping (BduiActionUiModel) -> Void
+    ) {
+        self.component = component
+        self.onAction = onAction
     }
 
-    @ViewBuilder
-    private func content() -> some View {
-        switch self.component {
-        case .text(_, let text):
-            Text(text.value)
-                .font(.system(size: text.style.size,
-                              weight: FontWeightMapper.map(text.style.weight)))
-                .foregroundColor(Color(bdui: text.color))
-                .apply(decoration: text.style.decoration)
+    public var body: some View {
+        switch component {
+        case .rowModel, .columnModel, .boxModel:
+            BduiContainerComponent(component: component, onAction: onAction)
 
-        case .image(_, let url):
-            BduiImage(url: url)
+        case .buttonModel(let m):
+            BduiButtonComponent(component: m, onAction: onAction)
 
-        case .button(let base, let text, let enabled):
+        case .imageModel(let m):
+            BduiImageComponent(component: m)
 
-            BduiButtonView(text: text,
-                           enabled: enabled,
-                           base: base)
-            {
-                self.fire(base.interactions?.onClick)
-            }
+        case .inputModel(let m):
+            BduiInputComponent(component: m, onAction: onAction)
 
-        case .input(let base, let text, let placeholder, let hint):
-            BduiInputView(
-                component: self.component,
-                base: base,
-                textModel: text,
-                placeholder: placeholder,
-                hint: hint
-            ) { newValue in
-                self.inputMirror = newValue
-            }
+        case .textModel(let m):
+            BduiTextComponent(component: m)
 
-        case .spacer:
-            Spacer(minLength: 0)
-
-        case .column:
-            BduiContainerView(component: self.component, onAction: self.onAction)
-
-        case .row:
-            BduiContainerView(component: self.component, onAction: self.onAction)
-
-        case .box:
-            BduiContainerView(component: self.component, onAction: self.onAction)
-        }
-    }
-
-    private func fire(_ actions: [BduiActionUI]?) {
-        actions?.forEach(self.onAction)
-    }
-}
-
-private extension Text {
-    @ViewBuilder
-    func applyTextDecoration(_ decoration: BduiTextDecorationType) -> some View {
-        switch decoration {
-        case .underline: self.underline()
-        case .strikethrough: self.strikethrough()
-        case .strikethroughRed: self.strikethrough(true, color: .red)
-        case .italic: self.italic()
-        case .regular: self
+        case .spacerModel(let m):
+            BduiSpacerComponent(component: m)
         }
     }
 }

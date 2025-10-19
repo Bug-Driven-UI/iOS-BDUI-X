@@ -1,0 +1,298 @@
+//
+//  BduiNavGraph.swift
+//  bdui-x
+//
+//  Created by dark type on 19.10.2025.
+//
+
+import Combine
+import SwiftUI
+import UIKit
+
+public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRepresentable {
+    public typealias BuildStart = () -> StartView
+    public typealias BuildBduiScreen = (_ args: BduiScreenArgs, _ isBottomSheet: Bool) -> BduiView
+
+    private let navigationManager: NavigationManager
+    private let resultStore: NavigationResultStore
+    private let buildStart: BuildStart
+    private let buildBduiScreen: BuildBduiScreen
+
+    public init(
+        navigationManager: NavigationManager,
+        resultStore: NavigationResultStore,
+        @ViewBuilder start: @escaping BuildStart,
+        @ViewBuilder bduiScreen: @escaping BuildBduiScreen
+    ) {
+        self.navigationManager = navigationManager
+        self.resultStore = resultStore
+        self.buildStart = start
+        self.buildBduiScreen = bduiScreen
+    }
+
+    public func makeUIViewController(context: Context) -> UINavigationController {
+        let root = FullScreenWrapper(content: buildStart())
+        let rootVC = UIHostingController(rootView: root)
+        let nav = UINavigationController(rootViewController: rootVC)
+        nav.navigationBar.isHidden = true
+        nav.isToolbarHidden = true
+        nav.view.backgroundColor = .clear
+        nav.modalPresentationCapturesStatusBarAppearance = true
+        nav.setNavigationBarHidden(true, animated: false)
+        nav.interactivePopGestureRecognizer?.isEnabled = true
+
+        context.coordinator.attach(
+            navController: nav,
+            navigationManager: navigationManager,
+            resultStore: resultStore,
+            buildStart: buildStart,
+            buildBduiScreen: buildBduiScreen
+        )
+        return nav
+    }
+
+    public func updateUIViewController(_ uiViewController: UINavigationController, context: Context) {
+        if let root = uiViewController.viewControllers.first as? UIHostingController<FullScreenWrapper<StartView>> {
+            root.rootView = FullScreenWrapper(content: buildStart())
+        }
+    }
+
+    public func makeCoordinator() -> Coordinator { Coordinator() }
+
+    public final class Coordinator: NSObject, UIAdaptivePresentationControllerDelegate {
+        private weak var nav: UINavigationController?
+        private var sub: AnyCancellable?
+        private var queue: [NavigationCommand] = []
+        private var isTransitioning = false
+
+        // Track stack beyond root
+        private var routes: [NavigationRoute] = []
+
+        // Bottom sheet
+        private var sheetController: UIViewController?
+        private var isSheetAlreadyDismissing = false
+
+        // Builders
+        private var buildStart: BuildStart!
+        private var buildBduiScreen: BuildBduiScreen!
+        private weak var resultStore: NavigationResultStore?
+
+        func attach(
+            navController: UINavigationController,
+            navigationManager: NavigationManager,
+            resultStore: NavigationResultStore,
+            buildStart: @escaping BuildStart,
+            buildBduiScreen: @escaping BuildBduiScreen
+        ) {
+            nav = navController
+            self.resultStore = resultStore
+            self.buildStart = buildStart
+            self.buildBduiScreen = buildBduiScreen
+
+            sub = navigationManager.commands
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] cmd in
+                    self?.enqueue(cmd)
+                }
+        }
+
+        private func enqueue(_ command: NavigationCommand) {
+            queue.append(command)
+            processNextIfIdle()
+        }
+
+        private func processNextIfIdle() {
+            guard !isTransitioning, !queue.isEmpty else { return }
+            isTransitioning = true
+            let cmd = queue.removeFirst()
+            handle(cmd)
+        }
+
+        private func finishTransition() {
+            isTransitioning = false
+            processNextIfIdle()
+        }
+
+        private func push<V: View>(_ view: V, animated: Bool = true) {
+            guard let nav else { finishTransition(); return }
+            let vc = UIHostingController(rootView: FullScreenWrapper(content: view))
+            vc.navigationItem.largeTitleDisplayMode = .never
+            CATransaction.begin()
+            CATransaction.setCompletionBlock { [weak self] in self?.finishTransition() }
+            nav.pushViewController(vc, animated: animated)
+            CATransaction.commit()
+        }
+
+        private func setStack(_ vcs: [UIViewController], animated: Bool = false, completion: (() -> Void)? = nil) {
+            guard let nav else { completion?(); finishTransition(); return }
+            CATransaction.begin()
+            CATransaction.setCompletionBlock { [weak self] in
+                completion?()
+                if completion == nil { self?.finishTransition() }
+            }
+            nav.setViewControllers(vcs, animated: animated)
+            CATransaction.commit()
+        }
+
+        private func presentSheet<V: View>(_ view: V) {
+            guard let nav else { finishTransition(); return }
+            let wrapped = FullScreenWrapper(content: view)
+            let sheetVC = UIHostingController(rootView: wrapped)
+            sheetVC.modalPresentationStyle = .pageSheet
+            if let sheet = sheetVC.sheetPresentationController {
+                if #available(iOS 15.0, *) {
+                    sheet.detents = [.large()]
+                    sheet.prefersGrabberVisible = true
+                }
+            }
+            sheetVC.presentationController?.delegate = self
+
+            isSheetAlreadyDismissing = false
+            nav.present(sheetVC, animated: true) { [weak self] in
+                self?.finishTransition()
+            }
+            sheetController = sheetVC
+        }
+
+        public func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
+            sheetController = nil
+            isSheetAlreadyDismissing = false
+        }
+
+        private func buildViewController(for route: NavigationRoute) -> UIViewController {
+            switch route {
+            case .startScreen:
+                return UIHostingController(rootView: FullScreenWrapper(content: buildStart()))
+            case .bduiScreen(let args):
+                return UIHostingController(rootView: FullScreenWrapper(content: buildBduiScreen(args, false)))
+            }
+        }
+
+        // Lock "back" when BDUI is on top
+        private func setBackLocked(_ locked: Bool) {
+            nav?.interactivePopGestureRecognizer?.isEnabled = !locked
+        }
+
+        private func handle(_ command: NavigationCommand) {
+            switch command {
+            case .navigate(let route):
+                if case .bduiScreen = route, routes.last == .startScreen {
+                    routes = [route]
+                    let vc = buildViewController(for: route)
+                    setStack([vc], animated: true)
+                    setBackLocked(true)
+                    return
+                }
+
+                routes.append(route)
+                switch route {
+                case .startScreen:
+                    push(buildStart())
+                    setBackLocked(false)
+                case .bduiScreen(let args):
+                    push(buildBduiScreen(args, false))
+                    setBackLocked(true)
+                }
+
+            case .navigateToBottomSheet(let sheet):
+                switch sheet {
+                case .bduiBottomSheet(let args):
+                    let screenArgs = BduiScreenArgs(screenName: args.screenName, screenParams: args.screenParams)
+                    presentSheet(buildBduiScreen(screenArgs, true))
+                }
+
+            case .replace(let route):
+                routes = [route]
+                let vc = buildViewController(for: route)
+                setStack([vc], animated: false)
+                setBackLocked(route.isBdui)
+
+            case .replaceWithBottomSheet(let sheet):
+                if !routes.isEmpty { routes.removeLast() }
+                guard let nav = nav else { finishTransition(); return }
+                var vcs = nav.viewControllers
+                if vcs.count > 1 { vcs.removeLast() }
+
+                switch sheet {
+                case .bduiBottomSheet(let args):
+                    let screenArgs = BduiScreenArgs(screenName: args.screenName, screenParams: args.screenParams)
+                    setStack(vcs, animated: false) { [weak self] in
+                        guard let self = self else { return }
+                        self.presentSheet(self.buildBduiScreen(screenArgs, true))
+                    }
+                }
+
+            case .back:
+                // Ignore back when BDUI is the only/top screen (permanent)
+                if routes.last?.isBdui == true, (nav?.viewControllers.count ?? 1) <= 1 {
+                    finishTransition()
+                    return
+                }
+                if let _ = sheetController, !isSheetAlreadyDismissing {
+                    isSheetAlreadyDismissing = true
+                    sheetController?.dismiss(animated: true) { [weak self] in
+                        self?.sheetController = nil
+                        self?.isSheetAlreadyDismissing = false
+                        self?.finishTransition()
+                    }
+                } else if let nav, nav.viewControllers.count > 1 {
+                    routes.removeLast()
+                    // Pop
+                    CATransaction.begin()
+                    CATransaction.setCompletionBlock { [weak self] in
+                        self?.setBackLocked(self?.routes.last?.isBdui == true)
+                        self?.finishTransition()
+                    }
+                    nav.popViewController(animated: true)
+                    CATransaction.commit()
+                } else {
+                    finishTransition()
+                }
+
+            case .backWithResult(let key, let value):
+                resultStore?.set(key, value: value)
+                // Same lock behavior as back
+                if routes.last?.isBdui == true, (nav?.viewControllers.count ?? 1) <= 1 {
+                    finishTransition()
+                    return
+                }
+                if let _ = sheetController, !isSheetAlreadyDismissing {
+                    isSheetAlreadyDismissing = true
+                    sheetController?.dismiss(animated: true) { [weak self] in
+                        self?.sheetController = nil
+                        self?.isSheetAlreadyDismissing = false
+                        self?.finishTransition()
+                    }
+                } else if let nav, nav.viewControllers.count > 1 {
+                    routes.removeLast()
+                    CATransaction.begin()
+                    CATransaction.setCompletionBlock { [weak self] in
+                        self?.setBackLocked(self?.routes.last?.isBdui == true)
+                        self?.finishTransition()
+                    }
+                    nav.popViewController(animated: true)
+                    CATransaction.commit()
+                } else {
+                    finishTransition()
+                }
+            }
+        }
+    }
+}
+
+struct FullScreenWrapper<Content: View>: View {
+    let content: Content
+    var body: some View {
+        content
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .background(Color.clear)
+            .ignoresSafeArea()
+    }
+}
+
+private extension NavigationRoute {
+    var isBdui: Bool {
+        if case .bduiScreen = self { return true }
+        return false
+    }
+}

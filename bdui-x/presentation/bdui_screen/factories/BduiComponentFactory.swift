@@ -2,240 +2,355 @@
 //  BduiComponentFactory.swift
 //  bdui-x
 //
-//  Created by dark type on 02.10.2025.
+//  Created by dark type on 19.10.2025.
 //
 
 import Foundation
 
-final class BduiComponentFactory {
+public final class BduiComponentFactory {
+    private let localStateResolver: LocalStateResolver
+    private let mapper: BduiComponentPropertiesMapper
 
-    func create(_ rendered: RenderedComponent) -> BduiComponentUI {
-        switch rendered {
+    public init(localStateResolver: LocalStateResolver,
+                mapper: BduiComponentPropertiesMapper)
+    {
+        self.localStateResolver = localStateResolver
+        self.mapper = mapper
+    }
 
-        case .column(let model):
-            return .column(
-                base: baseProperties(from: model),
-                children: model.children.map(create)
-            )
-
-        case .row(let model):
-            return .row(
-                base: baseProperties(from: model),
-                children: model.children.map(create)
-            )
-
-        case .box(let model):
-            return .box(
-                base: baseProperties(from: model),
-                children: model.children.map(create)
-            )
-
-        case .text(let model):
-            return .text(
-                base: baseProperties(from: model),
-                text: model.textWithStyle.toBduiText()
-            )
-
-        case .image(let model):
-            var base = baseProperties(from: model)
-            // Kotlin logic cleared image background; mirror that:
-            base = base.withBackground(nil)
-            return .image(
-                base: base,
-                url: model.imageUrl
-            )
-
-        case .input(let model):
-            return .input(
-                base: baseProperties(from: model),
-                text: model.textWithStyle.toBduiText(),
-                placeholder: model.placeholder?.textWithStyle.toBduiText(),
-                hint: model.hint?.textWithStyle.toBduiText()
-            )
-
-        case .button(let model):
-            return .button(
-                base: baseProperties(from: model),
-                text: model.textWithStyle.toBduiText(),
-                enabled: model.enabled
-            )
-
-        case .spacer(let model):
-            return .spacer(
-                base: baseProperties(from: model)
-            )
-
-        case .switch(let model):
-  
-            fatalError("Switch component mapping not implemented. Add a .switch case to BduiComponentUI.")
+    public func create(component: RenderedComponentModel) -> BduiComponentUiModel {
+        switch component {
+        case .boxModel(let m): return createBoxComponent(m)
+        case .buttonModel(let m): return createButtonComponent(m)
+        case .columnModel(let m): return createColumnComponent(m)
+        case .imageModel(let m): return createImageComponent(m)
+        case .inputModel(let m): return createInputComponent(m)
+        case .rowModel(let m): return createRowComponent(m)
+        case .spacerModel(let m): return createSpacerComponent(m)
+        case .switchModel:
+            // Not supported yet
+            fatalError("Switch component not supported yet")
+        case .textModel(let m): return createTextComponent(m)
         }
     }
 
-    // MARK: - Base builder
+    // MARK: - Base properties (use top-level model types, not RenderedComponentModel.*)
 
-    private func baseProperties(from model: any RenderedComponentCommon) -> BduiComponentBaseProperties {
-        BduiComponentBaseProperties(
-            id: model.id,
-            hash: model.hash,
-            interactions: model.interactions.toBduiInteractions(),
-            paddings: model.paddings?.toBduiInsets(),
-            margins: model.margins?.toBduiInsets(),
-            width: model.width.toBduiSize(),
-            height: model.height.toBduiSize(),
-            backgroundColor: model.backgroundColor?.toBduiColor(),
-            border: model.border?.toBduiBorder(),
-            shape: model.shape?.toBduiShape()
-        )
+    private func baseProperties(from m: RowModel,
+                                customize: (BduiBasePropertiesModel) -> BduiBasePropertiesModel = { $0 }) -> BduiBasePropertiesModel
+    {
+        customize(BduiBasePropertiesModel(
+            id: m.id,
+            hash: m.hash,
+            interactions: mapper.toBduiInteractions(m.interactions),
+            paddings: m.paddings.toComponentInsets(),
+            margins: m.margins.toComponentInsets(),
+            width: m.width.toComponentSize(),
+            height: m.height.toComponentSize(),
+            backgroundColor: m.backgroundColor.toBduiColor(),
+            border: m.border.toBduiBorder(),
+            shape: m.shape.toBduiShape()
+        ))
     }
-}
 
-// MARK: - Small mutating helper
-
-private extension BduiComponentBaseProperties {
-    func withBackground(_ color: BduiColor?) -> BduiComponentBaseProperties {
-        BduiComponentBaseProperties(
-            id: id,
-            hash: hash,
-            interactions: interactions,
-            paddings: paddings,
-            margins: margins,
-            width: width,
-            height: height,
-            backgroundColor: color,
-            border: border,
-            shape: shape
-        )
+    private func baseProperties(from m: BoxModel,
+                                customize: (BduiBasePropertiesModel) -> BduiBasePropertiesModel = { $0 }) -> BduiBasePropertiesModel
+    {
+        customize(BduiBasePropertiesModel(
+            id: m.id,
+            hash: m.hash,
+            interactions: mapper.toBduiInteractions(m.interactions),
+            paddings: m.paddings.toComponentInsets(),
+            margins: m.margins.toComponentInsets(),
+            width: m.width.toComponentSize(),
+            height: m.height.toComponentSize(),
+            backgroundColor: m.backgroundColor.toBduiColor(),
+            border: m.border.toBduiBorder(),
+            shape: m.shape.toBduiShape()
+        ))
     }
-}
-extension RenderedColorStyleModel {
-    func toBduiColor() -> BduiColor {
-        BduiColor(hex: hex)
+
+    private func baseProperties(from m: ColumnModel,
+                                customize: (BduiBasePropertiesModel) -> BduiBasePropertiesModel = { $0 }) -> BduiBasePropertiesModel
+    {
+        customize(BduiBasePropertiesModel(
+            id: m.id,
+            hash: m.hash,
+            interactions: mapper.toBduiInteractions(m.interactions),
+            paddings: m.paddings.toComponentInsets(),
+            margins: m.margins.toComponentInsets(),
+            width: m.width.toComponentSize(),
+            height: m.height.toComponentSize(),
+            backgroundColor: m.backgroundColor.toBduiColor(),
+            border: m.border.toBduiBorder(),
+            shape: m.shape.toBduiShape()
+        ))
     }
-}
 
-// MARK: - Insets
-
-extension RenderedInsetsModel {
-    func toBduiInsets() -> BduiComponentInsetsUI {
-        BduiComponentInsetsUI(
-            start: CGFloat(left),
-            end: CGFloat(right),
-            top: CGFloat(top),
-            bottom: CGFloat(bottom)
-        )
+    private func baseProperties(from m: TextModel,
+                                customize: (BduiBasePropertiesModel) -> BduiBasePropertiesModel = { $0 }) -> BduiBasePropertiesModel
+    {
+        customize(BduiBasePropertiesModel(
+            id: m.id,
+            hash: m.hash,
+            interactions: mapper.toBduiInteractions(m.interactions),
+            paddings: m.paddings.toComponentInsets(),
+            margins: m.margins.toComponentInsets(),
+            width: m.width.toComponentSize(),
+            height: m.height.toComponentSize(),
+            backgroundColor: m.backgroundColor.toBduiColor(),
+            border: m.border.toBduiBorder(),
+            shape: m.shape.toBduiShape()
+        ))
     }
-}
 
-// MARK: - Size
+    private func baseProperties(from m: ImageModel,
+                                customize: (BduiBasePropertiesModel) -> BduiBasePropertiesModel = { $0 }) -> BduiBasePropertiesModel
+    {
+        customize(BduiBasePropertiesModel(
+            id: m.id,
+            hash: m.hash,
+            interactions: mapper.toBduiInteractions(m.interactions),
+            paddings: m.paddings.toComponentInsets(),
+            margins: m.margins.toComponentInsets(),
+            width: m.width.toComponentSize(),
+            height: m.height.toComponentSize(),
+            backgroundColor: m.backgroundColor.toBduiColor(),
+            border: m.border.toBduiBorder(),
+            shape: m.shape.toBduiShape()
+        ))
+    }
 
-extension RenderedSizeModel {
-    func toBduiSize() -> BduiComponentSize {
-        switch self {
-        case .fixed(let value):
-            return .fixed(CGFloat(value))
-        case .weighted(let fraction):
-            return .weighted(CGFloat(fraction))
-        case .matchParent:
-            return .matchParent
-        case .wrapContent:
-            return .wrapContent
+    private func baseProperties(from m: InputModel,
+                                customize: (BduiBasePropertiesModel) -> BduiBasePropertiesModel = { $0 }) -> BduiBasePropertiesModel
+    {
+        customize(BduiBasePropertiesModel(
+            id: m.id,
+            hash: m.hash,
+            interactions: mapper.toBduiInteractions(m.interactions),
+            paddings: m.paddings.toComponentInsets(),
+            margins: m.margins.toComponentInsets(),
+            width: m.width.toComponentSize(),
+            height: m.height.toComponentSize(),
+            backgroundColor: m.backgroundColor.toBduiColor(),
+            border: m.border.toBduiBorder(),
+            shape: m.shape.toBduiShape()
+        ))
+    }
+
+    private func baseProperties(from m: SpacerModel,
+                                customize: (BduiBasePropertiesModel) -> BduiBasePropertiesModel = { $0 }) -> BduiBasePropertiesModel
+    {
+        customize(BduiBasePropertiesModel(
+            id: m.id,
+            hash: m.hash,
+            interactions: mapper.toBduiInteractions(m.interactions),
+            paddings: m.paddings.toComponentInsets(),
+            margins: m.margins.toComponentInsets(),
+            width: m.width.toComponentSize(),
+            height: m.height.toComponentSize(),
+            backgroundColor: m.backgroundColor.toBduiColor(),
+            border: m.border.toBduiBorder(),
+            shape: m.shape.toBduiShape()
+        ))
+    }
+
+    private func baseProperties(from m: SwitchModel,
+                                customize: (BduiBasePropertiesModel) -> BduiBasePropertiesModel = { $0 }) -> BduiBasePropertiesModel
+    {
+        customize(BduiBasePropertiesModel(
+            id: m.id,
+            hash: m.hash,
+            interactions: mapper.toBduiInteractions(m.interactions),
+            paddings: m.paddings.toComponentInsets(),
+            margins: m.margins.toComponentInsets(),
+            width: m.width.toComponentSize(),
+            height: m.height.toComponentSize(),
+            backgroundColor: m.backgroundColor.toBduiColor(),
+            border: m.border.toBduiBorder(),
+            shape: m.shape.toBduiShape()
+        ))
+    }
+
+    // MISSING BEFORE: ButtonModel overload
+    private func baseProperties(from m: ButtonModel,
+                                customize: (BduiBasePropertiesModel) -> BduiBasePropertiesModel = { $0 }) -> BduiBasePropertiesModel
+    {
+        customize(BduiBasePropertiesModel(
+            id: m.id,
+            hash: m.hash,
+            interactions: mapper.toBduiInteractions(m.interactions),
+            paddings: m.paddings.toComponentInsets(),
+            margins: m.margins.toComponentInsets(),
+            width: m.width.toComponentSize(),
+            height: m.height.toComponentSize(),
+            backgroundColor: m.backgroundColor.toBduiColor(),
+            border: m.border.toBduiBorder(),
+            shape: m.shape.toBduiShape()
+        ))
+    }
+
+    // MARK: - Component builders
+
+    private func createBoxComponent(_ component: BoxModel) -> BduiComponentUiModel {
+        .boxModel(BduiBoxComponentModel(
+            contentAlignment: component.contentAlignment.map(mapAlignment),
+            baseProperties: baseProperties(from: component),
+            children: component.children.map(create)
+        ))
+    }
+
+    private func createRowComponent(_ component: RowModel) -> BduiComponentUiModel {
+        .rowModel(BduiRowComponentModel(
+            horizontalArrangement: component.horizontalArrangement.map(mapArrangement),
+            verticalAlignment: component.verticalAlignment.map(mapAlignment),
+            isScrollable: component.isScrollable ?? false,
+            baseProperties: baseProperties(from: component),
+            children: component.children.map(create)
+        ))
+    }
+
+    private func createColumnComponent(_ component: ColumnModel) -> BduiComponentUiModel {
+        .columnModel(BduiColumnComponentModel(
+            verticalArrangement: component.verticalArrangement.map(mapArrangement),
+            horizontalAlignment: component.horizontalAlignment.map(mapAlignment),
+            baseProperties: baseProperties(from: component),
+            children: component.children.map(create)
+        ))
+    }
+
+    private func createTextComponent(_ component: TextModel) -> BduiComponentUiModel {
+        .textModel(BduiTextComponentModel(
+            baseProperties: baseProperties(from: component),
+            text: mapper.toBduiText(component.textWithStyle)
+        ))
+    }
+
+    private func createButtonComponent(_ component: ButtonModel) -> BduiComponentUiModel {
+        .buttonModel(BduiButtonComponentModel(
+            baseProperties: baseProperties(from: component),
+            text: {
+                // Wrap inner text component into UI Text
+                switch create(component: .textModel(component.text)) {
+                case .textModel(let t): return t
+                default:
+                    // Fallback: build directly
+                    return BduiTextComponentModel(
+                        baseProperties: baseProperties(from: component.text),
+                        text: mapper.toBduiText(component.text.textWithStyle)
+                    )
+                }
+            }(),
+            enabled: component.enabled
+        ))
+    }
+
+    private func createImageComponent(_ component: ImageModel) -> BduiComponentUiModel {
+        // Mirror Android: strip background for image
+        .imageModel(BduiImageComponentModel(
+            baseProperties: baseProperties(from: component) { base in
+                BduiBasePropertiesModel(
+                    id: base.id,
+                    hash: base.hash,
+                    interactions: base.interactions,
+                    paddings: base.paddings,
+                    margins: base.margins,
+                    width: base.width,
+                    height: base.height,
+                    backgroundColor: nil,
+                    border: base.border,
+                    shape: base.shape
+                )
+            },
+            imageUrl: component.imageUrl
+        ))
+    }
+
+    private func createInputComponent(_ component: InputModel) -> BduiComponentUiModel {
+        .inputModel(BduiInputComponentModel(
+            baseProperties: baseProperties(from: component),
+            text: mapper.toBduiText(component.textWithStyle),
+            // FIX: avoid Optional.map on RenderedStyledTextRepresentationModel via optional chaining
+            placeholder: component.placeholder.map { mapper.toBduiText($0.textWithStyle) },
+            rightIcon: component.rightIcon.map { right in
+                switch create(component: .imageModel(right)) {
+                case .imageModel(let img): return img
+                default:
+                    return BduiImageComponentModel(
+                        baseProperties: baseProperties(from: right),
+                        imageUrl: right.imageUrl
+                    )
+                }
+            },
+            onValueChangedActions: (component.onValueChanged ?? []).compactMap { action in
+                switch action {
+                case .setLocalStateFromInput(let a):
+                    if let path = localStateResolver.resolveRawPath(a.target) {
+                        return .setLocalStateFromInput(.init(targetPath: .init(path)))
+                    }
+                    return nil
+                default:
+                    return nil
+                }
+            }
+        ))
+    }
+
+    private func createSpacerComponent(_ component: SpacerModel) -> BduiComponentUiModel {
+        .spacerModel(BduiSpacerComponentModel(baseProperties: baseProperties(from: component)))
+    }
+
+    // MARK: - Alignments/arrangements mapping
+
+    private func mapArrangement(_ a: RenderedHorizontalArrangement) -> BduiHorizontalArrangementModel {
+        switch a {
+        case .start: return .start
+        case .end: return .end
+        case .center: return .center
+        case .spaceBetween: return .spaceBetween
+        case .spaceEvenly: return .spaceEvenly
+        case .spaceAround: return .spaceAround
         }
     }
-}
 
-// MARK: - Shape
-
-extension RenderedShapeModel {
-    func toBduiShape() -> BduiShape.RoundedCorners? {
-        switch type {
-        case .roundedCorners:
-            return BduiShape.RoundedCorners(
-                topStart: CGFloat(topLeft),
-                topEnd: CGFloat(topRight),
-                bottomStart: CGFloat(bottomLeft),
-                bottomEnd: CGFloat(bottomRight)
-            )
+    private func mapArrangement(_ a: RenderedVerticalArrangement) -> BduiVerticalArrangementModel {
+        switch a {
+        case .top: return .top
+        case .bottom: return .bottom
+        case .center: return .center
+        case .spaceBetween: return .spaceBetween
+        case .spaceEvenly: return .spaceEvenly
+        case .spaceAround: return .spaceAround
         }
     }
-}
 
-// MARK: - Border
-
-extension RenderedBorderModel {
-    func toBduiBorder() -> BduiBorder {
-        BduiBorder(
-            color: color.toBduiColor(),
-            thickness: CGFloat(thickness)
-        )
-    }
-}
-
-// MARK: - Text Decoration
-
-extension RenderedTextDecorationTypeModel {
-    func toBduiDecoration() -> BduiTextDecorationType {
-        switch self {
-        case .italic: return .italic
-        case .underline: return .underline
-        case .strikeThrough: return .strikethrough
-        case .strikeThroughRed: return .strikethroughRed
-        case .regular: return .regular
+    private func mapAlignment(_ a: RenderedHorizontalAlignment) -> BduiHorizontalAlignmentModel {
+        switch a {
+        case .start: return .start
+        case .center: return .center
+        case .end: return .end
         }
     }
-}
 
-// MARK: - Text Style
-
-extension RenderedTextStyleModel {
-    func toBduiTextStyle() -> BduiTextStyle {
-        BduiTextStyle(
-            decoration: decoration?.toBduiDecoration() ?? .regular,
-            weight: weight ?? 400,
-            size: CGFloat(size)
-        )
-    }
-}
-
-// MARK: - Styled Text
-
-extension RenderedStyledTextRepresentationModel {
-    func toBduiText() -> BduiText {
-        BduiText(
-            value: text,
-            color: colorStyle.toBduiColor(),
-            style: textStyle.toBduiTextStyle()
-        )
-    }
-}
-
-// MARK: - Actions / Interactions
-
-extension RenderedActionModel {
-    func toRemote() -> BduiActionUI.Remote {
-        switch self {
-        case .command(let cmd):
-            return .command(name: cmd.name, params: cmd.params)
-        case .updateScreen(let upd):
-            return .updateScreen(name: upd.screenName,
-                                 params: upd.screenNavigationParams)
+    private func mapAlignment(_ a: RenderedVerticalAlignment) -> BduiVerticalAlignmentModel {
+        switch a {
+        case .top: return .top
+        case .center: return .center
+        case .bottom: return .bottom
         }
     }
-}
 
-extension Array where Element == RenderedInteractionModel {
-    func toBduiInteractions() -> BduiComponentInteractionsUI? {
-        let onClick = actions(for: .onClick)
-        let onShow = actions(for: .onShow)
-        if onClick == nil && onShow == nil {
-            return nil
+    private func mapAlignment(_ a: RenderedHorizontalAndVerticalAlignment) -> BduiHorizontalAndVerticalAlignmentModel {
+        switch a {
+        case .topStart: return .topStart
+        case .topCenter: return .topCenter
+        case .topEnd: return .topEnd
+        case .centerStart: return .centerStart
+        case .center: return .center
+        case .centerEnd: return .centerEnd
+        case .bottomStart: return .bottomStart
+        case .bottomCenter: return .bottomCenter
+        case .bottomEnd: return .bottomEnd
         }
-        return BduiComponentInteractionsUI(onClick: onClick, onShow: onShow)
-    }
-
-    func actions(for type: RenderedInteractionModel.InteractionType) -> [BduiActionUI]? {
-        guard let model = first(where: { $0.type == type }) else { return nil }
-        if model.actions.isEmpty { return nil }
-        let remotes = model.actions.map { $0.toRemote() }
-        return [.sendRemoteActions(remotes)]
     }
 }

@@ -13,15 +13,21 @@ struct RoundedCornersShape: Shape {
     let bl: CGFloat
     let br: CGFloat
 
-    init(_ rc: BduiShape.RoundedCorners) {
-        self.tl = rc.topStart
-        self.tr = rc.topEnd
-        self.bl = rc.bottomStart
-        self.br = rc.bottomEnd
+    init(_ rc: BduiShapeModel.RoundedCornersModel) {
+        self.tl = CGFloat(rc.topStart)
+        self.tr = CGFloat(rc.topEnd)
+        self.bl = CGFloat(rc.bottomStart)
+        self.br = CGFloat(rc.bottomEnd)
+    }
+    init(tl: CGFloat, tr: CGFloat, bl: CGFloat, br:CGFloat) {
+        self.tl = tl
+        self.tr = tr
+        self.bl = bl
+        self.br = br
     }
 
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
+    func path(in rect: CGRect) -> SwiftUI.Path {
+        var path = SwiftUI.Path()
         let w = rect.width
         let h = rect.height
 

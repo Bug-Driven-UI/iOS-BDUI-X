@@ -7,28 +7,59 @@
 
 import SwiftUI
 
-struct BduiButtonView: View {
-    let text: BduiText
-    let enabled: Bool
-    let base: BduiComponentBaseProperties
-    let onTap: () -> Void
+public struct BduiButtonComponent: View {
+    let component: BduiButtonComponentModel
+    let onAction: (BduiActionUiModel) -> Void
+
+    public init(
+        component: BduiButtonComponentModel,
+        onAction: @escaping (BduiActionUiModel) -> Void
+    ) {
+        self.component = component
+        self.onAction = onAction
+    }
+
+    public var body: some View {
+        HStack(spacing: 0) {
+            BduiTextLeaf(component: component.text)
+                .bduiBaseProperties(
+                    base: component.text.baseProperties,
+                    onAction: onAction,
+                    buttonEnabled: false
+                )
+        }
+     
+    }
+}
+
+private struct BduiTextLeaf: View {
+    let component: BduiTextComponentModel
 
     var body: some View {
-        Button {
-            if enabled { onTap() }
-        } label: {
-            Text(text.value)
-                .font(.system(size: text.style.size,
-                              weight: FontWeightMapper.map(text.style.weight)))
-                .foregroundColor(Color(bdui: text.color).opacity(enabled ? 1 : 0.4))
-                .padding(.vertical, 12)
-                .padding(.horizontal, 20)
-                .frame(maxWidth: {
-                    if case .matchParent = base.width { return .infinity }
-                    return nil
-                }(), alignment: .center)
+        Text(component.text.value.asDisplayString)
+            .font(.system(size: CGFloat(component.text.style.size),
+                          weight: FontWeightMapper.map(component.text.style.weight)))
+            .foregroundStyle(component.text.color.toColor())
+            .multilineTextAlignment(component.text.textAlignment.toSwiftUI())
+    }
+}
+
+private extension Optional where Wrapped == BduiTextAlignmentModel {
+    func toSwiftUI() -> TextAlignment {
+        switch self {
+        case .some(.start): return .leading
+        case .some(.center): return .center
+        case .some(.end): return .trailing
+        case .none: return .leading
         }
-        .disabled(!enabled)
-        .buttonStyle(.plain)
+    }
+}
+
+private extension TextOrLocalStateModel {
+    var asDisplayString: String {
+        switch self {
+        case .text(let v): return v
+        case .localState(let path): return "#{\(path)}"
+        }
     }
 }

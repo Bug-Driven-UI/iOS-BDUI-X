@@ -12,11 +12,11 @@ struct ComponentPatch {
     let parentPath: String
     let childId: String
     let method: Method
-    let content: BduiComponentUI?
+    let content: BduiComponentUiModel?
 }
 
 final class ComponentPatchGroup {
-    var updates: [String: BduiComponentUI] = [:]
-    var inserts: [(String, BduiComponentUI)] = []
+    var updates: [String: BduiComponentUiModel] = [:]
+    var inserts: [(String, BduiComponentUiModel)] = []
     var deletes: Set<String> = []
 }

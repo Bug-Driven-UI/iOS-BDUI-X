@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		A52178782E8BA3BF00F59441 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = A52178772E8BA3BF00F59441 /* Kingfisher */; };
 		A521787B2E8BA3D900F59441 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = A521787A2E8BA3D900F59441 /* Alamofire */; };
+		A5B1FD802EA4AD4300458015 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = A5B1FD7F2EA4AD4300458015 /* FirebaseAnalytics */; };
+		A5B1FD822EA4AD4300458015 /* FirebaseAnalyticsCore in Frameworks */ = {isa = PBXBuildFile; productRef = A5B1FD812EA4AD4300458015 /* FirebaseAnalyticsCore */; };
+		A5B1FE0E2EA50F8900458015 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A5B1FE0D2EA50F8900458015 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +35,7 @@
 		A521783A2E8BA15B00F59441 /* bdui-x.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "bdui-x.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A52178472E8BA15C00F59441 /* bdui-xTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "bdui-xTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A52178512E8BA15C00F59441 /* bdui-xUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "bdui-xUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A5B1FE0D2EA50F8900458015 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -39,7 +43,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				"data/utils/DataResponse+Result.swift",
-				presentation/bdui_screen/mappers/bduiMappers.swift,
+				presentation/bdui_screen/mappers/bduiSwiftUIMapper.swift,
 				"presentation/utils/View+TapIfNeeded.swift",
 			);
 			target = A52178392E8BA15B00F59441 /* bdui-x */;
@@ -52,7 +56,7 @@
 			buildPhase = A52178382E8BA15B00F59441 /* Resources */;
 			membershipExceptions = (
 				"data/utils/DataResponse+Result.swift",
-				presentation/bdui_screen/mappers/bduiMappers.swift,
+				presentation/bdui_screen/mappers/bduiSwiftUIMapper.swift,
 				"presentation/utils/View+TapIfNeeded.swift",
 			);
 		};
@@ -87,6 +91,8 @@
 			files = (
 				A52178782E8BA3BF00F59441 /* Kingfisher in Frameworks */,
 				A521787B2E8BA3D900F59441 /* Alamofire in Frameworks */,
+				A5B1FD802EA4AD4300458015 /* FirebaseAnalytics in Frameworks */,
+				A5B1FD822EA4AD4300458015 /* FirebaseAnalyticsCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -114,6 +120,7 @@
 				A521784A2E8BA15C00F59441 /* bdui-xTests */,
 				A52178542E8BA15C00F59441 /* bdui-xUITests */,
 				A521783B2E8BA15B00F59441 /* Products */,
+				A5B1FE0D2EA50F8900458015 /* GoogleService-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -149,6 +156,8 @@
 			packageProductDependencies = (
 				A52178772E8BA3BF00F59441 /* Kingfisher */,
 				A521787A2E8BA3D900F59441 /* Alamofire */,
+				A5B1FD7F2EA4AD4300458015 /* FirebaseAnalytics */,
+				A5B1FD812EA4AD4300458015 /* FirebaseAnalyticsCore */,
 			);
 			productName = "bdui-x";
 			productReference = A521783A2E8BA15B00F59441 /* bdui-x.app */;
@@ -208,7 +217,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1630;
-				LastUpgradeCheck = 1630;
+				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					A52178392E8BA15B00F59441 = {
 						CreatedOnToolsVersion = 16.3;
@@ -229,12 +238,14 @@
 			knownRegions = (
 				en,
 				Base,
+				ru,
 			);
 			mainGroup = A52178312E8BA15B00F59441;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				A52178762E8BA3BF00F59441 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				A52178792E8BA3D900F59441 /* XCRemoteSwiftPackageReference "Alamofire" */,
+				A5B1FD7E2EA4AD4300458015 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A521783B2E8BA15B00F59441 /* Products */;
@@ -253,6 +264,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A5B1FE0E2EA50F8900458015 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -315,6 +327,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -369,6 +382,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -379,6 +393,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -426,6 +441,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -619,6 +635,14 @@
 				minimumVersion = 5.10.2;
 			};
 		};
+		A5B1FD7E2EA4AD4300458015 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.4.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -631,6 +655,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A52178792E8BA3D900F59441 /* XCRemoteSwiftPackageReference "Alamofire" */;
 			productName = Alamofire;
+		};
+		A5B1FD7F2EA4AD4300458015 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A5B1FD7E2EA4AD4300458015 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		A5B1FD812EA4AD4300458015 /* FirebaseAnalyticsCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A5B1FD7E2EA4AD4300458015 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

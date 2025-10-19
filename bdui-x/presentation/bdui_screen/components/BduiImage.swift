@@ -5,43 +5,41 @@
 //  Created by dark type on 01.10.2025.
 //
 
+import Kingfisher
 import SwiftUI
 
-import SwiftUI
+public struct BduiImageComponent: View {
+    let component: BduiImageComponentModel
+    let contentMode: SwiftUI.ContentMode
+    let enableFade: Bool
 
-struct BduiImage: View {
-    let url: String
-    @State private var fadedIn = false
+    @State private var loaded = false
 
-    var body: some View {
-        AsyncImage(url: URL(string: url)) { phase in
-            switch phase {
-            case .empty:
-                placeholder
-            case .success(let image):
-                image
-                    .resizable()
-                    .scaledToFill()
-                    .opacity(fadedIn ? 1 : 0)
-                    .onAppear {
-                        withAnimation(.easeIn(duration: 0.35)) {
-                            fadedIn = true
-                        }
-                    }
-            case .failure:
-                errorView
-            @unknown default:
-                placeholder
+    public init(
+        component: BduiImageComponentModel,
+        contentMode: SwiftUI.ContentMode = .fill,
+        enableFade: Bool = true
+    ) {
+        self.component = component
+        self.contentMode = contentMode
+        self._loaded = State(initialValue: false)
+        self.enableFade = enableFade
+    }
+
+    public var body: some View {
+        let urlString = component.imageUrl.isEmpty ? "https://placekitten.com/800/400" : component.imageUrl
+
+        KFImage(URL(string: urlString))
+            .placeholder {
+                Rectangle().fill(Color.gray.opacity(0.1))
             }
-        }
-        .clipped()
-    }
+            .fade(duration: enableFade ? 0.35 : 0.0)
+            .onSuccess { _ in loaded = true }
+            .onFailure { _ in loaded = true }
+            .resizable()
+            .aspectRatio(contentMode: contentMode)
+            .opacity(!enableFade || loaded ? 1.0 : 0.0)
+            .animation(.easeInOut(duration: enableFade ? 0.35 : 0), value: loaded)
 
-    private var placeholder: some View {
-        Color.gray.opacity(0.2)
-    }
-
-    private var errorView: some View {
-        Color.red.opacity(0.25)
     }
 }
