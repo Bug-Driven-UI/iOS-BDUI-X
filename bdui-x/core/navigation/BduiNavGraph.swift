@@ -33,6 +33,8 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
     public func makeUIViewController(context: Context) -> UINavigationController {
         let root = FullScreenWrapper(content: buildStart())
         let rootVC = UIHostingController(rootView: root)
+        rootVC.view.isOpaque = true
+        rootVC.view.backgroundColor = .white
         let nav = UINavigationController(rootViewController: rootVC)
         nav.navigationBar.isHidden = true
         nav.isToolbarHidden = true
@@ -115,7 +117,9 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
 
         private func push<V: View>(_ view: V, animated: Bool = true) {
             guard let nav else { finishTransition(); return }
-            let vc = UIHostingController(rootView: FullScreenWrapper(content: view))
+            let vc = UIHostingController(rootView: FullScreenWrapper(content: view, background: .white))
+            vc.view.isOpaque = true
+            vc.view.backgroundColor = .white
             vc.navigationItem.largeTitleDisplayMode = .never
             CATransaction.begin()
             CATransaction.setCompletionBlock { [weak self] in self?.finishTransition() }
@@ -136,14 +140,18 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
 
         private func presentSheet<V: View>(_ view: V) {
             guard let nav else { finishTransition(); return }
-            let wrapped = FullScreenWrapper(content: view)
-            let sheetVC = UIHostingController(rootView: wrapped)
+
+            let sheetVC = UIHostingController(rootView: FullScreenWrapper(content: view, background: .white))
+            sheetVC.view.isOpaque = true
+            sheetVC.view.backgroundColor = .white
             sheetVC.modalPresentationStyle = .pageSheet
             if let sheet = sheetVC.sheetPresentationController {
-                if #available(iOS 15.0, *) {
-                    sheet.detents = [.large()]
+                
+                    sheet.detents = [.medium()]
+                    sheet.selectedDetentIdentifier = .medium
+                    sheet.largestUndimmedDetentIdentifier = .medium
                     sheet.prefersGrabberVisible = true
-                }
+                
             }
             sheetVC.presentationController?.delegate = self
 
@@ -162,13 +170,19 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
         private func buildViewController(for route: NavigationRoute) -> UIViewController {
             switch route {
             case .startScreen:
-                return UIHostingController(rootView: FullScreenWrapper(content: buildStart()))
+                let vc = UIHostingController(rootView: FullScreenWrapper(content: buildStart(), background: .white))
+                vc.view.isOpaque = true
+                vc.view.backgroundColor = .white
+                return vc
             case .bduiScreen(let args):
-                return UIHostingController(rootView: FullScreenWrapper(content: buildBduiScreen(args, false)))
+                let vc = UIHostingController(rootView: FullScreenWrapper(content: buildBduiScreen(args, false), background: .white))
+                vc.view.isOpaque = true
+                vc.view.backgroundColor = .white
+                return vc
             }
         }
 
-        // Lock "back" when BDUI is on top
+        
         private func setBackLocked(_ locked: Bool) {
             nav?.interactivePopGestureRecognizer?.isEnabled = !locked
         }
@@ -282,11 +296,20 @@ public struct BduiNavGraph<StartView: View, BduiView: View>: UIViewControllerRep
 
 struct FullScreenWrapper<Content: View>: View {
     let content: Content
+    let background: Color
+
+    init(content: Content, background: Color = .white) {
+        self.content = content
+        self.background = background
+    }
+
     var body: some View {
-        content
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .background(Color.clear)
-            .ignoresSafeArea()
+        ZStack {
+            background.ignoresSafeArea()
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+        .ignoresSafeArea()
     }
 }
 

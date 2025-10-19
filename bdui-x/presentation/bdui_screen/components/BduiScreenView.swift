@@ -149,26 +149,37 @@ private struct BduiScreenScaffold: View {
     var body: some View {
         let _ = startMeasureIfNeeded()
 
-        VStack(spacing: 0) {
-            if let topBar = model.scaffold?.topBar {
-                TopBar(component: topBar, onAction: onAction)
-            }
+        ZStack {
+            // Solid background under everything and across the full screen
+            Color.white.ignoresSafeArea()
 
-            BduiScreenContent(model: model, onAction: onAction)
-                .background(
-                    GeometryReader { _ in
-                        Color.clear
-                            .onAppear {
-                                reportIfNeeded()
-                            }
-                    }
-                )
+            VStack(spacing: 0) {
+                if let topBar = model.scaffold?.topBar {
+                    TopBar(component: topBar, onAction: onAction)
+                        .frame(maxWidth: .infinity, alignment: .top)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .background(Color.white)
+                }
 
-            if let bottomBar = model.scaffold?.bottomBar {
-                BottomBar(component: bottomBar, onAction: onAction)
+                BduiScreenContent(model: model, onAction: onAction)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .background(
+                        GeometryReader { _ in
+                            Color.clear
+                                .onAppear { reportIfNeeded() }
+                        }
+                    )
+                    .ignoresSafeArea()
+
+                if let bottomBar = model.scaffold?.bottomBar {
+                    BottomBar(component: bottomBar, onAction: onAction)
+                        .frame(maxWidth: .infinity, alignment: .bottom)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .background(Color.white)
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .background(Color.white)
         .overlay {
             if model.isLoading {
                 LoaderScreen().frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -218,7 +229,8 @@ private struct BduiScreenContent: View {
                 Spacer().frame(height: 1)
             }
         }
-        .ignoresSafeArea(.container, edges: [.top, .bottom])
+        .background(.clear)
+        .ignoresSafeArea(.all)
     }
 }
 

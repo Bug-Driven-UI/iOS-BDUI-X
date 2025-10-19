@@ -16,7 +16,7 @@ public extension BduiColorModel {
         let s = hex.trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "#", with: "")
         var value: UInt64 = 0
-        guard Scanner(string: s).scanHexInt64(&value) else { return Color(.white) }
+        guard Scanner(string: s).scanHexInt64(&value) else { return Color(.clear) }
 
         switch s.count {
         case 6:

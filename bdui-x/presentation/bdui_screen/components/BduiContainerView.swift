@@ -31,6 +31,7 @@ public struct BduiContainerComponent: View {
                             onAction: onAction,
                             buttonEnabled: child.buttonEnabledValue
                         )
+                        .fixedSize(horizontal: false, vertical: true) // avoid vertical stretch
                 }
             }
 
@@ -40,34 +41,68 @@ public struct BduiContainerComponent: View {
         case .rowModel(let m):
             if m.isScrollable {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(alignment: m.verticalAlignment.toSwiftUI(), spacing: 0) {
+                    HStack(alignment: m.verticalAlignment.toSwiftUI(), spacing: 8) {
                         ForEach(Array(m.children.enumerated()), id: \.0) { _, child in
-                            BduiComponent(component: child, onAction: onAction)
-                                .bduiBaseProperties(
-                                    base: child.basePropertiesValue,
-                                    onAction: onAction,
-                                    buttonEnabled: child.buttonEnabledValue
-                                )
+                            rowChildView(child)
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-
             } else {
-                HStack(alignment: m.verticalAlignment.toSwiftUI(), spacing: 0) {
+                HStack(alignment: m.verticalAlignment.toSwiftUI(), spacing: 8) {
                     ForEach(Array(m.children.enumerated()), id: \.0) { _, child in
-                        BduiComponent(component: child, onAction: onAction)
-                            .bduiBaseProperties(
-                                base: child.basePropertiesValue,
-                                onAction: onAction,
-                                buttonEnabled: child.buttonEnabledValue
-                            )
-                            .applyWidthWeight(child.widthWeight)
+                        rowChildView(child)
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
         default:
             EmptyView()
+        }
+    }
+
+    // MARK: - Row child rendering (iOS 13+ friendly)
+
+    @ViewBuilder
+    private func rowChildView(_ child: BduiComponentUiModel) -> some View {
+        switch child {
+        case .spacerModel:
+            // Treat spacer as real flexible space, not a view with background/shape
+            Spacer(minLength: 0)
+
+        case .buttonModel:
+            BduiComponent(component: child, onAction: onAction)
+                .bduiBaseProperties(
+                    base: child.basePropertiesValue,
+                    onAction: onAction,
+                    buttonEnabled: child.buttonEnabledValue
+                )
+                .fixedSize(horizontal: true, vertical: true) // keep intrinsic size
+                .applyWidthWeight(child.widthWeight)          // expand only if weighted
+
+        case .textModel:
+            BduiComponent(component: child, onAction: onAction)
+                .bduiBaseProperties(
+                    base: child.basePropertiesValue,
+                    onAction: onAction,
+                    buttonEnabled: child.buttonEnabledValue
+                )
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .layoutPriority(1)                            // resist compression vs Spacer
+                .fixedSize(horizontal: false, vertical: true)
+                .applyWidthWeight(child.widthWeight)
+
+        default:
+            BduiComponent(component: child, onAction: onAction)
+                .bduiBaseProperties(
+                    base: child.basePropertiesValue,
+                    onAction: onAction,
+                    buttonEnabled: child.buttonEnabledValue
+                )
+                .fixedSize(horizontal: false, vertical: true)
+                .applyWidthWeight(child.widthWeight)
         }
     }
 }
@@ -253,24 +288,30 @@ private struct AnyShapeCompat: Shape {
     func path(in rect: CGRect) -> SwiftUI.Path { _path(rect) }
 }
 
-// MARK: - Layout helpers
+// MARK: - Layout helpers (iOS 13+ compatible)
 
 private extension View {
     func applyWidth(_ size: BduiComponentSizeModel) -> some View {
         switch size {
-        case .fixed(let v): return AnyView(frame(width: CGFloat(v)))
-        case .weighted: return AnyView(frame(maxWidth: .infinity))
-        case .matchParent: return AnyView(frame(maxWidth: .infinity))
-        case .wrapContent: return AnyView(self)
+        case .fixed(let v):
+            return AnyView(frame(width: CGFloat(v)))
+        case .weighted:
+            // Allow to expand, share remaining width with other weighted items
+            return AnyView(frame(maxWidth: .infinity))
+        case .matchParent:
+            return AnyView(frame(maxWidth: .infinity))
+        case .wrapContent:
+            return AnyView(self)
         }
     }
 
     func applyHeight(_ size: BduiComponentSizeModel) -> some View {
         switch size {
-        case .fixed(let v): return AnyView(frame(height: CGFloat(v)))
-        case .weighted: return AnyView(frame(maxHeight: .infinity))
-        case .matchParent: return AnyView(frame(maxHeight: .infinity))
-        case .wrapContent: return AnyView(self)
+        case .fixed(let v):
+            return AnyView(frame(height: CGFloat(v)))
+        case .weighted, .matchParent, .wrapContent:
+            // IMPORTANT: do NOT force maxHeight: .infinity for row/column items to avoid vertical inflation (huge bottom bar)
+            return AnyView(self)
         }
     }
 }
@@ -282,24 +323,12 @@ private extension Optional where Wrapped == BduiComponentInsetsUiModel {
     }
 }
 
-private extension View {
-    @ViewBuilder
-    func applyHeightWeight(_ weight: CGFloat?) -> some View {
-        if let w = weight {
-            frame(maxHeight: .infinity)
-                .layoutPriority(Double(max(0.0, min(1.0, w))))
-        } else {
-            self
-        }
-    }
-}
-
 struct ColumnModelBody: View {
     let m: BduiColumnComponentModel
     let onAction: (BduiActionUiModel) -> Void
 
     var body: some View {
-        VStack(alignment: m.horizontalAlignment.toSwiftUI(), spacing: 0) {
+        VStack(alignment: m.horizontalAlignment.toSwiftUI(), spacing: 8) {
             ForEach(Array(m.children.enumerated()), id: \.0) { _, child in
                 BduiComponent(component: child, onAction: onAction)
                     .bduiBaseProperties(
@@ -307,7 +336,8 @@ struct ColumnModelBody: View {
                         onAction: onAction,
                         buttonEnabled: child.buttonEnabledValue
                     )
-                    .applyHeightWeight(child.heightWeight)
+                    // Do NOT force maxHeight here; keep intrinsic height to prevent oversized sections
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .bduiBaseProperties(base: m.baseProperties, onAction: onAction)
@@ -317,9 +347,9 @@ struct ColumnModelBody: View {
 private extension View {
     @ViewBuilder
     func applyWidthWeight(_ weight: CGFloat?) -> some View {
-        if let w = weight {
+        if let _ = weight {
+            // Expand horizontally with others; exact fractional split is approximated on iOS <16
             frame(maxWidth: .infinity)
-                .layoutPriority(Double(max(0.0, min(1.0, w))))
         } else {
             self
         }
